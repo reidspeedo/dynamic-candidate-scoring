@@ -1,30 +1,25 @@
-from utils import chat_completion_request, extract_text_from_pdf, calculate_final_score
-from config import tools, model
+from utils import chat_completion_request, extract_text_from_pdf, calculate_final_score, read_file
+from config import tools, model, agent_description, directory
 import os
 import uuid
 import json
 from tqdm import tqdm
 
-def read_file(file_path):
-    with open(file_path, "r") as file:
-        return file.read().strip()
-
 
 def get_scoring_system():
     job_description = read_file("job_description.txt")
     custom_considerations = read_file("custom_considerations.txt")
-    agent_description = read_file("agent_description.txt")
     messages = [
         {
             "role": "system",
-            "content": agent_description,
+            "content": "You are a recruiter with 20 years of experience in analyzing resumes against job descriptions.",
         },
         {
             "role": "user",
             "content": f"Here is the job description for the job posting in question: {job_description}. "
-                       f"Please generate a list of criteria for scoring system to be used for this job description."
+                       f"Please generate a list of evaluations for scoring system to be used for this job description."
                        f"Make sure to include these additional considerations to the scoring system: {custom_considerations} "
-                       f"There should be at least 10-12 criterias to evaluate the job against but no more than 15."
+                       f"There should be AT LEAST 7 separate evaluations to evaluate the job against but no more than 10."
                        f"Strictly adhere to a weight between 0 (unnecessary) & 10 (absolutely necessary)"
         }
     ]
@@ -33,16 +28,11 @@ def get_scoring_system():
                                        tool_choice={"type": "function", "function": {"name": "get_scoring_system"}})
 
     if response:
-
+        # Adding additional fields to the scoring system
         scoring_system = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
 
-        # Adding additional fields to the scoring system
-        # scoring_system = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
-        #
-        # for criterion in scoring_system["scoring_system"]:
-        #     criterion["id"] = str(uuid.uuid4())  # Generates a unique identifier
-        #     criterion["candidate_score"] = 0  # Placeholder for candidate scores
-        #     criterion["reasoning"] = "TBD"  # Placeholder for reasoning text
+        for i, criterion in enumerate(scoring_system["scoring_system"]):
+            criterion["id"] = f'ID_{criterion["type"][0].upper()}{i}'
 
         return scoring_system
 
@@ -50,23 +40,25 @@ def get_scoring_system():
         return None
 
 
-def get_criteria_score(criteria, resume):
-    agent_description = read_file("agent_description.txt")
+def get_criteria_score(scoring_data, section, type):
+    criteria = filter_by_type(scoring_data, type)
     messages = [
-
         {
             "role": "system",
-            "content": agent_description
+            "content": agent_description[type]
         },
         {
             "role": "user",
-            "content": f"Here is the candidate's resume: {resume} that needs to be evaluated. "
-                       f"Here is the criteria that I need you to evaluate: {criteria}."
-                       f"Please out put only a candidate score (0-10) on how well the resume meets that evaluation and "
+            "content": f"Here is the candidate's {type} section: {section} "
+                       f"Here is a list of {len(criteria)} criterias: {criteria}."
+                       f"For each criteria, provide a candidate score (0-10) and "
                        f"a reasoning (1 short sentence) on why you provided that score."
+                       f"There MUST be a total of {len(criteria)} scores!"
+                       f"You MUST return the id of the evaluation"
         }
     ]
 
+    # response = chat_completion_request(messages, model)
     response = chat_completion_request(messages, model, tools=tools,
                                        tool_choice={"type": "function", "function": {"name": "get_candidate_score"}})
     if response:
@@ -75,65 +67,192 @@ def get_criteria_score(criteria, resume):
         return None
 
 
-def get_contact_information(resume):
-    agent_description = read_file("agent_description.txt")
+def parse_resume(resume):
     messages = [
 
         {
             "role": "system",
-            "content": agent_description
+            "content": f"Your sole purpose is to parse resumes into 4 sections (Contact Information, Work Experience, "
+                       f"Education, Skills / Certifications). You only copy & reorganize text. YOU DO NOT change text."
         },
         {
             "role": "user",
             "content": f"Here is the candidate's resume: {resume}."
-                       f"Please retrieve the name of the candidate, email, and phone number. "
-                       f"Format the information so it's easy to read."
-                       f"Leave field empty if not found in resume."
+                       f"Do not change text, just reorganize it into three sections: "
+                       f"Contact Information, Education, Work Experience, and Skills / Certifications "
         }
     ]
 
     response = chat_completion_request(messages, model, tools=tools,
-                                       tool_choice={"type": "function", "function": {"name": "get_contact_details"}})
+                                       tool_choice={"type": "function", "function": {"name": "parse_resume"}})
     if response:
         return json.loads(response.choices[0].message.tool_calls[0].function.arguments)
     else:
         return None
 
+
 def simulate_test_mode():
     # Use hardcoded scoring system for test mode
-    scoring_system = {
-        'scoring_system': [
-            {'type': 'Additional Considerations', 'weight': 8,
-             'evaluation': 'Experience with studio integrations should be weighted higher'},
-            {'type': 'Additional Considerations', 'weight': 8,
-             'evaluation': 'Data conversation/migration would be a great addition'}
+    scoring_data = {
+        "scoring_system": [
+            {
+                "evaluation": "8+ years of experience working in Workday",
+                "id": "ID_W0",
+                "type": "work_experience",
+                "weight": 8
+            },
+            {
+                "evaluation": "At least one full implementation of Workday, with demonstrated Workday technical and integrations experience",
+                "id": "ID_W1",
+                "type": "work_experience",
+                "weight": 9
+            },
+            {
+                "evaluation": "6+ years of experience building Workday Integrations with Workday Studio, EIB, and Core Connectors",
+                "id": "ID_W2",
+                "type": "work_experience",
+                "weight": 8
+            },
+            {
+                "evaluation": "6+ years experience developing Workday custom reports and calculated fields",
+                "id": "ID_W3",
+                "type": "work_experience",
+                "weight": 7
+            },
+            {
+                "evaluation": "6+ years' experience integrating systems with third-party service vendors",
+                "id": "ID_W4",
+                "type": "work_experience",
+                "weight": 7
+            },
+            {
+                "evaluation": "Bachelor's degree in Computer Science, Computer Engineering, relevant technical field, or equivalent practical experience",
+                "id": "ID_E5",
+                "type": "education",
+                "weight": 6
+            },
+            {
+                "evaluation": "Enthusiastic about solving complex, system-to-system integration problems",
+                "id": "ID_S6",
+                "type": "skills_certification",
+                "weight": 9
+            },
+            {
+                "evaluation": "Familiarity with Workday administrative functions including tenant configuration, data loads, payroll configurations and maintenance",
+                "id": "ID_S7",
+                "type": "skills_certification",
+                "weight": 8
+            },
+            {
+                "evaluation": "Proven record of accomplishment of effectively interacting with large sets of internal and external stakeholders",
+                "id": "ID_S8",
+                "type": "skills_certification",
+                "weight": 7
+            },
+            {
+                "evaluation": "Experience in Workday Extend based application implementation",
+                "id": "ID_S9",
+                "type": "skills_certification",
+                "weight": 6
+            }
         ]
     }
     # Use hardcoded total score calculation for test mode
-    total_score = [
-        {'type': 'Additional Considerations', 'weight': 8,
-         'evaluation': 'Experience with studio integrations should be weighted higher',
-         'candidate_score': 3,
-         'reasoning': 'Limited information provided on studio integrations experience.',
-         'id': str(uuid.uuid4())},
-        {'type': 'Additional Considerations', 'weight': 8,
-         'evaluation': 'Data conversation/migration would be a great addition',
-         'candidate_score': 4,
-         'reasoning': 'The resume does not provide any evidence of experience or skills in data conversation/migration.',
-         'id': str(uuid.uuid4())}
+    candidate_score = [
+        {
+            "criteria_score": 10,
+            "id": "ID_W0",
+            "reasoning": "The candidate has over 8 years of extensive experience working in various roles related to Workday, showcasing exceptional expertise."
+        },
+        {
+            "criteria_score": 9,
+            "id": "ID_W1",
+            "reasoning": "The candidate has demonstrated experience leading and implementing a concept for verifiable credentials, securing substantial funding and acting as a technical subject matter expert in integrating credential data into enterprise platforms, notably Workday."
+        },
+        {
+            "criteria_score": 9,
+            "id": "ID_W2",
+            "reasoning": "With over 6 years of experience building Workday integrations using various tools and technologies, the candidate has demonstrated significant proficiency and expertise in this area."
+        },
+        {
+            "criteria_score": 7,
+            "id": "ID_W3",
+            "reasoning": "The candidate has 6+ years of experience in developing Workday custom reports and calculated fields, showing a solid foundation in report development within the Workday platform."
+        },
+        {
+            "criteria_score": 7,
+            "id": "ID_W4",
+            "reasoning": "Having over 6 years of experience integrating systems with third-party service vendors, the candidate has a strong background in system integration and collaboration with external partners."
+        },
+        {
+            "criteria_score": 5,
+            "id": "ID_E5",
+            "reasoning": "The candidate has a Bachelor's degree in Mechanical Engineering, which is a relevant technical field."
+        },
+        {
+            "criteria_score": 9,
+            "id": "ID_S6",
+            "reasoning": "Extensive certification in Workday Studio and integration technologies aligns with the high competency required for complex system-to-system integration problems"
+        },
+        {
+            "criteria_score": 8,
+            "id": "ID_S7",
+            "reasoning": "Extensive expertise in Workday administrative functions and configurations meets the advanced level of familiarity expected for tenant configuration and data management"
+        },
+        {
+            "criteria_score": 6,
+            "id": "ID_S9",
+            "reasoning": "Solid experience in Workday Extend indicates a good foundation for application implementation although may require further development"
+        },
+        {
+            "criteria_score": 0,
+            "id": "ID_S8",
+            "reasoning": "Insufficient evidence of interacting effectively with large sets of stakeholders based on the provided qualifications"
+        }
     ]
     # Use hardcoded contact information for test mode
-    contact_info = {
-        'candidate_name': 'K R I S T I L A A R',
-        'phone_number': '909.555.0100',
-        'email': 'kristi@example.com'
-    }
-    return scoring_system, total_score, contact_info
+    format_resume = {
+    "contact_information": {
+        "email": "rrrelatores@gmail.com",
+        "name": "Reid Relatores",
+        "phone_number": "513.675.8640"
+    },
+    "education": "Ohio State University \u2013B.S. Mechanical Engineering Aug 2011 \u2013Dec 2016",
+    "skills_certification": "\u2022Certifications in Workday Studio, Integrations, HCM, Recruiting, and Talent & Performance.\n\u2022Expert in Workday integration technologies including WD Studio, RaaS , EIB, Core Connectors, PECI, Advanced Load, OX 2.0)\n\u2022Expert in working with Workday business processes, calculated fields, custom reports, and general configuration.\n\u2022Expert with Workday APIs (WWS, Public REST, & WQL)\n\u2022Experience with Workday Extend .\n\u2022Proficient in Python, JavaScript, React, REST & SOAP API, HTML, CSS, XML, JSON",
+    "work_experience": "Accenture \u2013Integrations Lead, Insurance Company Nov 2023 -Present\n\u2022Supporting the deployment of a web application that overlays & integrates with Workday to enrich the overall hiring, talent, & onboarding experiences for candidates, employees, and managers.\n\u2022Leveraging Workday WWS, RaaS , and WQL to develop real -time, high -performance API services tailored for the web application.\n\u2022Implementing GenAI solutions that leverage Workday data to create seamless experiences around feedback, hiring, and leave -management.\n\nAccenture \u2013Digital Identity & Integrations Specialist Dec 2022 -Oct 2023\n\u2022Developed an interoperable middleware integration platform concept for verifiable credentials, securing over $1M in funding for FY24.\n\u2022Acted as the technical SME for integrating credential data into enterprise platforms, notably Workday.\n\nAccenture \u2013Integrations & Reporting Lead, Life Sciences Company Nov 2021 -Oct 2023\n\u2022Designed, developed, built, tested, and deployed over 30+ Workday integrations spanning Recruiting, HCM, and Talent modules.\n\u2022Led the reporting work stream to design, build, and test over 20 Workday reports, including 10 Matrix reports .\n\u2022Facilitated design workshops with functional, data, and integration resources to properly document and design integrations and reports.\n\nAccenture \u2013Integrations Specialist, Entertainment Company Dec 2019 \u2013Nov 2021\n\u2022Co-led the integrations team to design, develop, build, test, and deploy over 100+ Workday integrations spanning multiple Workday modules.\n\u2022Led a team to analyze, document, and disposition over 400+ existing Workday integrations in an acquired company\u2019s existing tenant.\n\nAccenture \u2013Data Migration Lead, Entertainment Company Jul 2019 \u2013Dec 2019\n\u2022Partnered with security teams to document data protection strategy that followed client's security guidelines.\n\u2022Led a team to execute the foundation migration in order to test data pipelines and overall process flows.\n\nAccenture \u2013Data Migration Specialist, Aerospace Company Jan 2017 \u2013Jul 2019\n\u2022Managed the recruiting data migration into Workday for a major aerospace company. In addition, led the full suite (i.e . HCM, Recruiting, Compensation, Performance) migration effort for their four subsidiary companies ."
+}
+    return scoring_data, candidate_score, format_resume
 
-def main(test_mode=True):
+
+def filter_by_type(scoring_data, desired_type):
+    """
+    Filters a list of scoring criteria by the specified type.
+
+    :param scoring_data: List of dictionaries containing scoring criteria.
+    :param desired_type: The type to filter by.
+    :return: List of dictionaries where the 'type' matches the desired type.
+    """
+    filtered_data = [item for item in scoring_data['scoring_system'] if item['type'] == desired_type]
+    return filtered_data
+
+
+def merge_score(candidate_score, scoring_data):
+    # Create a dictionary for scoring data for quick lookup
+    scoring_dict = {item['id']: item for item in scoring_data['scoring_system']}
+
+    # Merge candidate scores with scoring data
+    merged_data = []
+    for candidate in candidate_score:
+        if candidate['id'] in scoring_dict:
+            merged_item = {**candidate, **scoring_dict[candidate['id']]}
+            merged_data.append(merged_item)
+
+    return merged_data
+
+
+def main(resume_directory=directory, test_mode=True):
     candidate_rankings = []  # Array of objects storing candidate rankings
-    directory = "/Users/reidrelatores/coding/dynamic-candidate-scoring/resumes"
-    pdf_files = [f for f in os.listdir(directory) if f.endswith('.pdf')]  # List all PDF files
+    pdf_files = [f for f in os.listdir(resume_directory) if f.endswith('.pdf')]  # List all PDF files
 
     # Process each PDF file with a progress bar
     for pdf_filename in tqdm(pdf_files, desc="Processing Resumes", unit="file"):
@@ -142,33 +261,48 @@ def main(test_mode=True):
 
         if test_mode:
             # Hardcoded values for testing
-            scoring_system, total_score, contact_info = simulate_test_mode()
+            scoring_data, candidate_score, format_resume = simulate_test_mode()
+
         else:
-            # Live mode processing
-            scoring_system = get_scoring_system()
-            total_score = []
-            for criteria in scoring_system['scoring_system']:
-                score = get_criteria_score(criteria, resume)
-                criteria["candidate_score"] = score["candidate_score"]
-                criteria["reasoning"] = score["reasoning"]
-                criteria["id"] = str(uuid.uuid4())
-                total_score.append(criteria)
-            contact_info = get_contact_information(resume)
 
-        final_score = calculate_final_score(total_score)
+            # formt resume
+            format_resume = parse_resume(resume)
+
+            # save sections of the resume
+            education = format_resume['education']
+            work_experience = format_resume['work_experience']
+            skills_certification = format_resume['skills_certification']
+
+
+            # generate scoring system
+            scoring_data = get_scoring_system()
+
+            # get candidate_score
+            we_score = get_criteria_score(scoring_data, work_experience, "work_experience")
+            edu_score = get_criteria_score(scoring_data, education, "education")
+            skc_score = get_criteria_score(scoring_data, skills_certification, "skills_certification")
+            candidate_score = we_score["candidate_scores"] + edu_score["candidate_scores"] + skc_score[
+                "candidate_scores"]
+
+        # merge scoring system with scores
+        all_scores = merge_score(candidate_score, scoring_data)
+        # calculate final score
+        final_score = calculate_final_score(all_scores)
+
         candidate_rankings.append({
-            "application_id": str(uuid.uuid4()),
-            "final_score": final_score,
-            "scoring": total_score,
-            "contact_info": contact_info,
-        })
+                "application_id": str(uuid.uuid4()),
+                "all_scores": all_scores,
+                "final_score": final_score,
+                "contact_info": format_resume["contact_information"],
+            })
 
-    sorted_rankings = sorted(candidate_rankings, key=lambda x: x['final_score'], reverse=True)
-    return sorted_rankings
+    return sorted(candidate_rankings, key=lambda x: x['final_score'], reverse=True)
+
+
+
 
 if __name__ == "__main__":
-    result = main(test_mode=False)
-    print(json.dumps(result, indent=4, sort_keys=True))
+    candidate_rankings = main(test_mode=False)
 
     # Print a formatted leaderboard from the sorted rankings
     print("\nCandidate Leaderboard\n" + "-" * 30)
@@ -176,10 +310,10 @@ if __name__ == "__main__":
     print(leaderboard_format.format(rank="Rank", name="Candidate Name", score="Final Score", email="Email"))
     print("-" * 80)
 
-    for i, candidate in enumerate(result, start=1):
-        candidate_name = candidate['contact_info'].get('candidate_name', 'N/A')
-        candidate_score = f"{round(candidate['final_score'])} / 100"  # Now formatted as a percentage
-        candidate_email = candidate['contact_info'].get('email', 'N/A')
+    for i, application in enumerate(candidate_rankings, start=1):
+        candidate_name = application['contact_info'].get('name', 'N/A')
+        candidate_score = f"{round(application['final_score'])} / 100"  # Now formatted as a percentage
+        candidate_email = application['contact_info'].get('email', 'N/A')
         print(
             leaderboard_format.format(rank=f"{i}.", name=candidate_name, score=candidate_score, email=candidate_email))
 
