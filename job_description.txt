@@ -1,0 +1,41 @@
+About the job
+Meta's People Engineering Team has the responsibility of building applications and experiences for Meta's engineers, who change the world. Workday sits at the middle of all people data and integrates with dozens of internal applications and hundreds of external systems.As an Integration Engineer, you will play a key role in re-imagining productivity by shipping transformative products that serve Meta’s employees and business groups. The ideal candidate will question common assumptions, rethink existing design, configurations, and see every challenge as an opportunity for system improvements. The ideal candidate will have the opportunity to scale the business, evaluate current architecture, solve complex business problems for HR and Global Payroll and inspire the team to challenge the status quo.
+
+Workday Integration Engineer Responsibilities:
+
+Serve as the subject matter expert on large collections of Workday integrations
+Lead the research, design, development, testing, and delivery of new Workday Integrations
+Create detailed integration specifications, field mappings, and designs to support the entire integration deployment life-cycle
+Work with business stakeholders to determine problem areas and overall impact of projects
+Research integration failures, perform root cause analyses, and report back to management and business leaders. Develop plans to more forward the overall Workday strategy for Meta
+Partner with business leaders and People Engineering teams to align on objectives and programs
+Help manage the timelines and deliverables within large, multi-month projects
+Understand data flows and system usage between internal systems and Workday, driving alignment with other system owners
+Drive an overall data strategy for people-related data and Workday’s place in it
+
+Minimum Qualifications:
+
+Bachelor's degree in Computer Science, Computer Engineering, relevant technical field, or equivalent practical experience.
+8+ years of experience working in Workday
+At least one full implementation of Workday, with demonstrated Workday technical and integrations experience
+6+ years of experience building Workday Integrations with Workday Studio, EIB, and Core Connectors
+6+ years experience developing Workday custom reports and calculated fields
+6+ years' experience integrating systems with third-party service vendors
+
+Preferred Qualifications:
+
+Bachelor's degree in Computer Science or similar field
+Enthusiastic about solving complex, system-to-system integration problems
+Familiarity with Workday administrative functions including tenant configuration, data loads, payroll configurations and maintenance
+Proven record of accomplishment of effectively interacting with large sets of internal and external stakeholders
+Demonstrated experience working in a fast-paced environment with stakeholders and users
+Experience in Workday Extend based application implementation
+Experience driving large architectural changes involving Workday and other systems
+
+About Meta:
+
+Meta builds technologies that help people connect, find communities, and grow businesses. When Facebook launched in 2004, it changed the way people connect. Apps like Messenger, Instagram and WhatsApp further empowered billions around the world. Now, Meta is moving beyond 2D screens toward immersive experiences like augmented and virtual reality to help build the next evolution in social technology. People who choose to build their careers by building with us at Meta help shape a future that will take us beyond what digital connection makes possible today—beyond the constraints of screens, the limits of distance, and even the rules of physics.
+
+Meta is proud to be an Equal Employment Opportunity and Affirmative Action employer. We do not discriminate based upon race, religion, color, national origin, sex (including pregnancy, childbirth, or related medical conditions), sexual orientation, gender, gender identity, gender expression, transgender status, sexual stereotypes, age, status as a protected veteran, status as an individual with a disability, or other applicable legally protected characteristics. We also consider qualified applicants with criminal histories, consistent with applicable federal, state and local law. Meta participates in the E-Verify program in certain locations, as required by law. Please note that Meta may leverage artificial intelligence and machine learning technologies in connection with applications for employment.
+
+Meta is committed to providing reasonable accommodations for candidates with disabilities in our recruiting process. If you need any assistance or accommodations due to a disability, please let us know at accommodations-ext@fb.com.
