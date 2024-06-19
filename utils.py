@@ -9,7 +9,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 
-def chat_completion_request(messages, model, tools=None, tool_choice=None):
+def chat_completion_request(messages, model, tools=None, tool_choice=None, response_format={"type": "json_object"}):
     """
     Sends a request to the OpenAI API to generate a chat completion.
     Args:
@@ -23,7 +23,7 @@ def chat_completion_request(messages, model, tools=None, tool_choice=None):
     try:
         response = client.chat.completions.create(
             model=model,
-            response_format={"type": "json_object"},
+            response_format=response_format,
             messages=messages,
             tools=tools,
             tool_choice=tool_choice,

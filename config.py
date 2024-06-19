@@ -1,83 +1,99 @@
 # GPT Model
 model = "gpt-3.5-turbo-0125"
-# model = "gpt-4"
+# model = "gpt-4o"
 # Resume directory
 directory = "/Users/reidrelatores/coding/dynamic-candidate-scoring/resumes"
 # Configuration for tools used in the API
-tools = [
-    {"type": "function",
-     "function": {
-         "name": "parse_resume",
-         "description": "Retrieves contact information, Work Experience, Education, and Skills & Certifications from "
-                        "a candidates resume",
-         "parameters": {
-             "type": "object",
-             "properties": {
-                 "work_experience": {
-                     "type": "string",
-                     "description": "All Work Experience from the resume."
-                 },
-                 "education": {
-                     "type": "string",
-                     "description": "Education from the resume."
-                 },
-                 "skills_certification": {
-                     "type": "string",
-                     "description": "All Skills & Certifications from the resume."
-                 },
-                 "contact_information": {
-                     "type": "object",
-                     "description": "Name, email, and phone number from the resume.",
-                     "properties": {
-                         "name": {
-                             "type": "string",
-                             "description": "First and last name of the candidate"
-                         },
-                         "email": {
-                             "type": "string",
-                             "description": "email of the candidate"
-                         },
-                         "phone_number": {
-                             "type": "string",
-                             "description": "phone_number of the candidate"
-                         }
-                     }
-                 }
-
-             }
-         },
-         "required": ["contact_information", "work_experience", "education", "skills_certification"]
-     }},
-    {"type": "function",
-     "function": {
-         "name": "get_scoring_system",
-         "description": "Generate a candidate scoring system based on a job description and additional considerations.",
-         "parameters": {
-             "type": "object",
-             "properties": {
-                 "scoring_system": {
-                     "type": "object",
-                     "description": "A list of criteria (based on the job description and additional considerations) for the scoring system to use",
-                     "properties": {
-                         "type": {
-                             "type": "string",
-                             "enum": ["work_experience", "education", "skills_certification"],
-                             "description": "The category should be one of the following: work_experience, education, or skills_certification"
-                         },
-                         "weight": {
-                             "type": "number",
-                             "description": "The weight assigned to this category, between 0 and 10."
-                         },
-                         "evaluation": {
-                             "type": "string",
-                             "description": "The evaluation criteria (i.e, 10 years of Python experience)"
-                         }
-                     }
-                 }
-             },
-             "required": ["type", "weight", "evaluation"]
-         }
-     }},
+tools_resume = [
+    {
+        "type": "function",
+        "function": {
+            "name": "parse_resume",
+            "description": "Retrieves contact information, Work Experience, Education, and Skills & Certifications from a candidate's resume.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "contact_information": {
+                        "type": "object",
+                        "description": "Contact information of the candidate.",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "First and last name of the candidate."
+                            },
+                            "email": {
+                                "type": "string",
+                                "description": "Email address of the candidate."
+                            },
+                            "phone_number": {
+                                "type": "string",
+                                "description": "Phone number of the candidate."
+                            }
+                        },
+                        "required": ["name", "email", "phone_number"]
+                    },
+                    "work_experience": {
+                        "type": "array",
+                        "description": "List of work experiences from the resume.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "education": {
+                        "type": "array",
+                        "description": "List of educational qualifications from the resume.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "skills_certification": {
+                        "type": "array",
+                        "description": "List of skills and certifications from the resume.",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": ["contact_information", "work_experience", "education", "skills_certification"]
+            }
+        }
+    }]
+tools_scoring = [{
+    "type": "function",
+    "function": {
+        "name": "get_scoring_system",
+        "description": "Generate a candidate scoring system based on a job description and additional considerations.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "scoring_system": {
+                    "type": "array",
+                    "description": "A list of criteria (based on the job description and additional considerations) for the scoring system to use",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["work_experience", "education", "skills_certification"],
+                                "description": "The category should be one of the following: work_experience, education, or skills_certification"
+                            },
+                            "weight": {
+                                "type": "number",
+                                "description": "The weight assigned to this category, between 0 and 10."
+                            },
+                            "evaluation": {
+                                "type": "string",
+                                "description": "The evaluation criteria (i.e, 10 years of Python experience)"
+                            }
+                        },
+                        "required": ["type", "weight", "evaluation"]
+                    }
+                }
+            },
+            "required": ["scoring_system"]
+        }
+    }
+},
     {
         "type": "function",
         "function": {

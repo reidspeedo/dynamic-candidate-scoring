@@ -1,5 +1,5 @@
 from utils import chat_completion_request, extract_text_from_pdf, calculate_final_score, read_file
-from config import tools, model, agent_description, directory
+from config import tools_resume, tools_scoring, model, agent_description, directory
 import os
 import uuid
 import logging
@@ -29,7 +29,7 @@ def get_scoring_system():
         }
     ]
 
-    response = chat_completion_request(messages, model, tools=tools,
+    response = chat_completion_request(messages, model, tools=tools_scoring,
                                        tool_choice={"type": "function", "function": {"name": "get_scoring_system"}})
 
     if response:
@@ -46,8 +46,23 @@ def get_scoring_system():
         return None
 
 
+def generate_evaluation_json(scoring_system):
+    results = []
+
+    for criteria in scoring_system['scoring_system']:
+        evaluation_json = {
+            'id': criteria['id'],
+            'criteria_score': "[INSERT CANDIDATE SCORE HERE]",  # Placeholder score, replace with actual scoring logic
+            'reasoning': "[INSERT REASONING HERE]",
+        }
+        results.append(evaluation_json)
+
+    return str(json.dumps(results, indent=4))
+
+
 def get_criteria_score(scoring_data, section, type):
     criteria = filter_by_type(scoring_data, type)
+    prompt = generate_evaluation_json(scoring_data)
     messages = [
         {
             "role": "system",
@@ -57,14 +72,16 @@ def get_criteria_score(scoring_data, section, type):
             "role": "user",
             "content": f"Here is the candidate's {type} section: {section} "
                        f"Here is a list of {len(criteria)} criterias: {criteria}."
-                       f"For each criteria, provide a candidate score (0-10) and "
-                       f"a reasoning (1 short sentence) on why you provided that score."
-                       f"There MUST be a total of {len(criteria)} scores and you MUST return the id of the evaluation"
+                       f"For each criteria, provide a candidate score (0-10), "
+                       f"a reasoning (1 short sentence) on why you provided that score,"
+                       f" and the ID associated with the evaulatuion."
+                       f"Here is a template that you MUST use. "
+                       f"You are REQUIRED to fill out sections in []. " + prompt
         }
     ]
 
     # response = chat_completion_request(messages, model)
-    response = chat_completion_request(messages, model, tools=tools,
+    response = chat_completion_request(messages, model, tools=tools_scoring,
                                        tool_choice={"type": "function", "function": {"name": "get_candidate_score"}})
     if response:
         return json.loads(response.choices[0].message.tool_calls[0].function.arguments)
@@ -90,8 +107,9 @@ def parse_resume(resume):
         }
     ]
 
-    response = chat_completion_request(messages, model, tools=tools,
-                                       tool_choice={"type": "function", "function": {"name": "parse_resume"}})
+    response = chat_completion_request(messages, model, tools=tools_resume,
+                                       tool_choice={"type": "function", "function": {"name": "parse_resume"}},
+                                       response_format=None)
     if response:
         return json.loads(response.choices[0].message.tool_calls[0].function.arguments)
     else:
@@ -277,6 +295,7 @@ def main(resume_directory=directory, test_mode=True):
         else:
             # Format resume
             format_resume = parse_resume(resume)
+            # x, y, format_resume = simulate_test_mode()
             logging.info(f"Formatted resume for {pdf_filename} for: {format_resume}")
 
             # Save sections of the resume
