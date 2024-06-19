@@ -2,8 +2,13 @@ from utils import chat_completion_request, extract_text_from_pdf, calculate_fina
 from config import tools, model, agent_description, directory
 import os
 import uuid
+import logging
 import json
 from tqdm import tqdm
+
+# Set up logging to write to a file
+logging.basicConfig(filename='process_logs.log', level=logging.INFO, filemode='w',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def get_scoring_system():
@@ -12,7 +17,7 @@ def get_scoring_system():
     messages = [
         {
             "role": "system",
-            "content": "You are a recruiter with 20 years of experience in analyzing resumes against job descriptions.",
+            "content": "You are a recruiter with 20 years of experience in analyzing resumes against job descriptions. Output JSON.",
         },
         {
             "role": "user",
@@ -30,6 +35,7 @@ def get_scoring_system():
     if response:
         # Adding additional fields to the scoring system
         scoring_system = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+        logging.info(f"Scoring system generated. {scoring_system}")
 
         for i, criterion in enumerate(scoring_system["scoring_system"]):
             criterion["id"] = f'ID_{criterion["type"][0].upper()}{i}'
@@ -45,7 +51,7 @@ def get_criteria_score(scoring_data, section, type):
     messages = [
         {
             "role": "system",
-            "content": agent_description[type]
+            "content": agent_description[type] + "Output JSON."
         },
         {
             "role": "user",
@@ -53,8 +59,7 @@ def get_criteria_score(scoring_data, section, type):
                        f"Here is a list of {len(criteria)} criterias: {criteria}."
                        f"For each criteria, provide a candidate score (0-10) and "
                        f"a reasoning (1 short sentence) on why you provided that score."
-                       f"There MUST be a total of {len(criteria)} scores!"
-                       f"You MUST return the id of the evaluation"
+                       f"There MUST be a total of {len(criteria)} scores and you MUST return the id of the evaluation"
         }
     ]
 
@@ -73,13 +78,15 @@ def parse_resume(resume):
         {
             "role": "system",
             "content": f"Your sole purpose is to parse resumes into 4 sections (Contact Information, Work Experience, "
-                       f"Education, Skills / Certifications). You only copy & reorganize text. YOU DO NOT change text."
+                       f"Education, Skills / Certifications). You only copy & reorganize text. YOU DO NOT change text. Output JSON."
+
         },
         {
             "role": "user",
             "content": f"Here is the candidate's resume: {resume}."
                        f"Do not change text, just reorganize it into three sections: "
                        f"Contact Information, Education, Work Experience, and Skills / Certifications "
+                       f"ALL 4 SECTIONS REQUIRED. Use N/A if you cannot determine a value."
         }
     ]
 
@@ -212,15 +219,15 @@ def simulate_test_mode():
     ]
     # Use hardcoded contact information for test mode
     format_resume = {
-    "contact_information": {
-        "email": "rrrelatores@gmail.com",
-        "name": "Reid Relatores",
-        "phone_number": "513.675.8640"
-    },
-    "education": "Ohio State University \u2013B.S. Mechanical Engineering Aug 2011 \u2013Dec 2016",
-    "skills_certification": "\u2022Certifications in Workday Studio, Integrations, HCM, Recruiting, and Talent & Performance.\n\u2022Expert in Workday integration technologies including WD Studio, RaaS , EIB, Core Connectors, PECI, Advanced Load, OX 2.0)\n\u2022Expert in working with Workday business processes, calculated fields, custom reports, and general configuration.\n\u2022Expert with Workday APIs (WWS, Public REST, & WQL)\n\u2022Experience with Workday Extend .\n\u2022Proficient in Python, JavaScript, React, REST & SOAP API, HTML, CSS, XML, JSON",
-    "work_experience": "Accenture \u2013Integrations Lead, Insurance Company Nov 2023 -Present\n\u2022Supporting the deployment of a web application that overlays & integrates with Workday to enrich the overall hiring, talent, & onboarding experiences for candidates, employees, and managers.\n\u2022Leveraging Workday WWS, RaaS , and WQL to develop real -time, high -performance API services tailored for the web application.\n\u2022Implementing GenAI solutions that leverage Workday data to create seamless experiences around feedback, hiring, and leave -management.\n\nAccenture \u2013Digital Identity & Integrations Specialist Dec 2022 -Oct 2023\n\u2022Developed an interoperable middleware integration platform concept for verifiable credentials, securing over $1M in funding for FY24.\n\u2022Acted as the technical SME for integrating credential data into enterprise platforms, notably Workday.\n\nAccenture \u2013Integrations & Reporting Lead, Life Sciences Company Nov 2021 -Oct 2023\n\u2022Designed, developed, built, tested, and deployed over 30+ Workday integrations spanning Recruiting, HCM, and Talent modules.\n\u2022Led the reporting work stream to design, build, and test over 20 Workday reports, including 10 Matrix reports .\n\u2022Facilitated design workshops with functional, data, and integration resources to properly document and design integrations and reports.\n\nAccenture \u2013Integrations Specialist, Entertainment Company Dec 2019 \u2013Nov 2021\n\u2022Co-led the integrations team to design, develop, build, test, and deploy over 100+ Workday integrations spanning multiple Workday modules.\n\u2022Led a team to analyze, document, and disposition over 400+ existing Workday integrations in an acquired company\u2019s existing tenant.\n\nAccenture \u2013Data Migration Lead, Entertainment Company Jul 2019 \u2013Dec 2019\n\u2022Partnered with security teams to document data protection strategy that followed client's security guidelines.\n\u2022Led a team to execute the foundation migration in order to test data pipelines and overall process flows.\n\nAccenture \u2013Data Migration Specialist, Aerospace Company Jan 2017 \u2013Jul 2019\n\u2022Managed the recruiting data migration into Workday for a major aerospace company. In addition, led the full suite (i.e . HCM, Recruiting, Compensation, Performance) migration effort for their four subsidiary companies ."
-}
+        "contact_information": {
+            "email": "rrrelatores@gmail.com",
+            "name": "Reid Relatores",
+            "phone_number": "513.675.8640"
+        },
+        "education": "Ohio State University \u2013B.S. Mechanical Engineering Aug 2011 \u2013Dec 2016",
+        "skills_certification": "\u2022Certifications in Workday Studio, Integrations, HCM, Recruiting, and Talent & Performance.\n\u2022Expert in Workday integration technologies including WD Studio, RaaS , EIB, Core Connectors, PECI, Advanced Load, OX 2.0)\n\u2022Expert in working with Workday business processes, calculated fields, custom reports, and general configuration.\n\u2022Expert with Workday APIs (WWS, Public REST, & WQL)\n\u2022Experience with Workday Extend .\n\u2022Proficient in Python, JavaScript, React, REST & SOAP API, HTML, CSS, XML, JSON",
+        "work_experience": "Accenture \u2013Integrations Lead, Insurance Company Nov 2023 -Present\n\u2022Supporting the deployment of a web application that overlays & integrates with Workday to enrich the overall hiring, talent, & onboarding experiences for candidates, employees, and managers.\n\u2022Leveraging Workday WWS, RaaS , and WQL to develop real -time, high -performance API services tailored for the web application.\n\u2022Implementing GenAI solutions that leverage Workday data to create seamless experiences around feedback, hiring, and leave -management.\n\nAccenture \u2013Digital Identity & Integrations Specialist Dec 2022 -Oct 2023\n\u2022Developed an interoperable middleware integration platform concept for verifiable credentials, securing over $1M in funding for FY24.\n\u2022Acted as the technical SME for integrating credential data into enterprise platforms, notably Workday.\n\nAccenture \u2013Integrations & Reporting Lead, Life Sciences Company Nov 2021 -Oct 2023\n\u2022Designed, developed, built, tested, and deployed over 30+ Workday integrations spanning Recruiting, HCM, and Talent modules.\n\u2022Led the reporting work stream to design, build, and test over 20 Workday reports, including 10 Matrix reports .\n\u2022Facilitated design workshops with functional, data, and integration resources to properly document and design integrations and reports.\n\nAccenture \u2013Integrations Specialist, Entertainment Company Dec 2019 \u2013Nov 2021\n\u2022Co-led the integrations team to design, develop, build, test, and deploy over 100+ Workday integrations spanning multiple Workday modules.\n\u2022Led a team to analyze, document, and disposition over 400+ existing Workday integrations in an acquired company\u2019s existing tenant.\n\nAccenture \u2013Data Migration Lead, Entertainment Company Jul 2019 \u2013Dec 2019\n\u2022Partnered with security teams to document data protection strategy that followed client's security guidelines.\n\u2022Led a team to execute the foundation migration in order to test data pipelines and overall process flows.\n\nAccenture \u2013Data Migration Specialist, Aerospace Company Jan 2017 \u2013Jul 2019\n\u2022Managed the recruiting data migration into Workday for a major aerospace company. In addition, led the full suite (i.e . HCM, Recruiting, Compensation, Performance) migration effort for their four subsidiary companies ."
+    }
     return scoring_data, candidate_score, format_resume
 
 
@@ -254,55 +261,63 @@ def main(resume_directory=directory, test_mode=True):
     candidate_rankings = []  # Array of objects storing candidate rankings
     pdf_files = [f for f in os.listdir(resume_directory) if f.endswith('.pdf')]  # List all PDF files
 
+    logging.info("Starting processing of resumes.")
+
     # Process each PDF file with a progress bar
     for pdf_filename in tqdm(pdf_files, desc="Processing Resumes", unit="file"):
         pdf_path = os.path.join(directory, pdf_filename)
         resume = extract_text_from_pdf(pdf_path)
+        logging.info(f"Extracted text from {pdf_filename}")
 
         if test_mode:
             # Hardcoded values for testing
             scoring_data, candidate_score, format_resume = simulate_test_mode()
+            logging.info(f"Test Mode: {pdf_filename} scored with {candidate_score}")
 
         else:
-
-            # formt resume
+            # Format resume
             format_resume = parse_resume(resume)
+            logging.info(f"Formatted resume for {pdf_filename} for: {format_resume}")
 
-            # save sections of the resume
+            # Save sections of the resume
             education = format_resume['education']
             work_experience = format_resume['work_experience']
             skills_certification = format_resume['skills_certification']
+            logging.info(f"Resume sections for {pdf_filename}: Education, Work Experience, Skills")
 
-
-            # generate scoring system
+            # Generate scoring system
             scoring_data = get_scoring_system()
+            logging.info(f"Scoring system generated. {scoring_data}")
 
-            # get candidate_score
+            # Get candidate_score
             we_score = get_criteria_score(scoring_data, work_experience, "work_experience")
             edu_score = get_criteria_score(scoring_data, education, "education")
             skc_score = get_criteria_score(scoring_data, skills_certification, "skills_certification")
             candidate_score = we_score["candidate_scores"] + edu_score["candidate_scores"] + skc_score[
                 "candidate_scores"]
+            logging.info(f"Candidate scores for {pdf_filename}: {candidate_score}")
 
-        # merge scoring system with scores
+        # Merge scoring system with scores
         all_scores = merge_score(candidate_score, scoring_data)
-        # calculate final score
+        # Calculate final score
         final_score = calculate_final_score(all_scores)
+        logging.info(f"Final score for {pdf_filename}: {final_score}")
 
         candidate_rankings.append({
-                "application_id": str(uuid.uuid4()),
-                "all_scores": all_scores,
-                "final_score": final_score,
-                "contact_info": format_resume["contact_information"],
-            })
+            "application_id": str(uuid.uuid4()),
+            "all_scores": all_scores,
+            "final_score": final_score,
+            "contact_info": format_resume["contact_information"],
+        })
 
-    return sorted(candidate_rankings, key=lambda x: x['final_score'], reverse=True)
-
-
+    sorted_rankings = sorted(candidate_rankings, key=lambda x: x['final_score'], reverse=True)
+    logging.info("Completed processing all resumes.")
+    return sorted_rankings
 
 
 if __name__ == "__main__":
     candidate_rankings = main(test_mode=False)
+    print(json.dumps(candidate_rankings, indent=4))
 
     # Print a formatted leaderboard from the sorted rankings
     print("\nCandidate Leaderboard\n" + "-" * 30)

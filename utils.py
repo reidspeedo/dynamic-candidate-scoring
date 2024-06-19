@@ -23,16 +23,18 @@ def chat_completion_request(messages, model, tools=None, tool_choice=None):
     try:
         response = client.chat.completions.create(
             model=model,
+            response_format={"type": "json_object"},
             messages=messages,
             tools=tools,
             tool_choice=tool_choice,
-            # temperature=.2
+            temperature=0.2
         )
         return response
     except Exception as e:
         print("Unable to generate ChatCompletion response")
         print(f"Exception: {e}")
         return None
+
 
 def calculate_final_score(all_scores):
     total_score = 0
@@ -55,9 +57,11 @@ def calculate_final_score(all_scores):
 
     return normalized_final_score
 
+
 def read_file(file_path):
     with open(file_path, "r") as file:
         return file.read().strip()
+
 
 def extract_text_from_pdf(pdf_path):
     text = ""
