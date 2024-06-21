@@ -27,7 +27,7 @@ def chat_completion_request(messages, model, tools=None, tool_choice=None, respo
             messages=messages,
             tools=tools,
             tool_choice=tool_choice,
-            temperature=0.2
+            temperature=0
         )
         return response
     except Exception as e:

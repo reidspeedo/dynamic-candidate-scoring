@@ -1,8 +1,8 @@
 # GPT Model
-model = "gpt-3.5-turbo-0125"
-# model = "gpt-4o"
+# model = "gpt-3.5-turbo-0125"
+model = "gpt-4o"
 # Resume directory
-directory = "/Users/reidrelatores/coding/dynamic-candidate-scoring/resumes"
+directory = "/Users/reidrelatores/coding/dynamic-candidate-scoring/poc/resumes"
 # Configuration for tools used in the API
 tools_resume = [
     {
