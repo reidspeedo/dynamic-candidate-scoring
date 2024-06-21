@@ -282,6 +282,10 @@ def main(resume_directory=directory, test_mode=True):
     logging.info("Starting processing of resumes.")
 
     # Process each PDF file with a progress bar
+    # Generate scoring system
+    scoring_data = get_scoring_system()
+    logging.info(f"Scoring system generated. {scoring_data}")
+
     for pdf_filename in tqdm(pdf_files, desc="Processing Resumes", unit="file"):
         pdf_path = os.path.join(directory, pdf_filename)
         resume = extract_text_from_pdf(pdf_path)
@@ -303,10 +307,6 @@ def main(resume_directory=directory, test_mode=True):
             work_experience = format_resume['work_experience']
             skills_certification = format_resume['skills_certification']
             logging.info(f"Resume sections for {pdf_filename}: Education, Work Experience, Skills")
-
-            # Generate scoring system
-            scoring_data = get_scoring_system()
-            logging.info(f"Scoring system generated. {scoring_data}")
 
             # Get candidate_score
             we_score = get_criteria_score(scoring_data, work_experience, "work_experience")
