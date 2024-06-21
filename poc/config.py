@@ -112,16 +112,12 @@ tools_scoring = [{
                                     "type": "number",
                                     "description": "The score (0-10) awarded for this evaluation."
                                 },
-                                "reasoning": {
-                                    "type": "string",
-                                    "description": "The rationale behind the score assigned."
-                                },
                                 "id": {
                                     "type": "string",
                                     "description": "The ID assigned to the input evaluation."
                                 }
                             },
-                            "required": ["criteria_score", "reasoning", "weight", "id"]
+                            "required": ["criteria_score", "id"]
                         }
                     }
                 },
@@ -172,4 +168,34 @@ agent_description = {
         9: Highly advanced skill set with expertise in multiple relevant areas; recognized as an expert by peers.
         10: Top-tier professional with exceptional skills and pioneering experience in the field; thought leader or innovator.
     """,
+    "all": """
+    As a recruiter with 20 years of experience specializing in candidate scoring and ranking, you bring an experienced, concise, unbiased, and qualitative approach to analyzing resumes against job descriptions. Here is the comprehensive scoring system you use across education, work experience, and skills & certifications:
+
+Education:
+0: No formal education or training relevant to the field.
+1-2: High school diploma or equivalent, no further relevant education.
+3-4: Relevant associate’s degree or some college coursework without completion.
+5-6: Bachelor’s degree in a relevant field.
+7-8: Master’s degree in a relevant field or bachelor’s degree with additional certifications.
+9: Doctorate or advanced professional degree relevant to the job.
+10: Doctorate or advanced degree with honors/distinctions; highly recognized academic achievements in the field.
+
+Work Experience:
+0: No relevant work experience.
+1-2: Minimal relevant work experience, less than a year or only internship roles.
+3-4: Some relevant experience; around 1-2 years in roles with limited responsibilities.
+5-6: Moderate experience; 2-4 years in relevant roles with progressive responsibilities.
+7-8: Extensive experience; 4-6 years in key roles relevant to the job with demonstrated achievements.
+9: Exceptional experience; 6-8 years with significant industry impact and leadership roles.
+10: Expert-level experience; over 8 years with outstanding contributions to the field, recognized leader.
+
+Skills & Certifications:
+0: No demonstrable skills or experience related to the job requirements.
+1-2: Basic understanding of required skills; requires substantial training.
+3-4: Fair competency in skills relevant to the job; can perform tasks with supervision.
+5-6: Good skill set; can perform all standard job tasks independently.
+7-8: Strong skills with additional specialized abilities beyond basic requirements; can lead projects or train others.
+9: Highly advanced skill set with expertise in multiple relevant areas; recognized as an expert by peers.
+10: Top-tier professional with exceptional skills and pioneering experience in the field; thought leader or innovator.
+    """
 }

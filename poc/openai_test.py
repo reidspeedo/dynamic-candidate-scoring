@@ -53,27 +53,24 @@ def generate_evaluation_json(scoring_system):
         evaluation_json = {
             'id': criteria['id'],
             'criteria_score': "[INSERT CANDIDATE SCORE HERE]",  # Placeholder score, replace with actual scoring logic
-            'reasoning': "[INSERT REASONING HERE]",
         }
         results.append(evaluation_json)
 
     return str(json.dumps(results, indent=4))
 
 
-def get_criteria_score(scoring_data, section, type):
-    criteria = filter_by_type(scoring_data, type)
+def get_criteria_score(scoring_data, resume):
     prompt = generate_evaluation_json(scoring_data)
     messages = [
         {
             "role": "system",
-            "content": agent_description[type] + "Output JSON."
+            "content": agent_description["all"] + "Output JSON."
         },
         {
             "role": "user",
-            "content": f"Here is the candidate's {type} section: {section} "
-                       f"Here is a list of {len(criteria)} criterias: {criteria}."
+            "content": f"Here is the candidate's resume: {resume}"
+                       f"Here is a list of criteria to evaluate the resume: {scoring_data}"
                        f"For each criteria, provide a candidate score (0-10), "
-                       f"a reasoning (1 short sentence) on why you provided that score,"
                        f" and the ID associated with the evaulatuion."
                        f"Here is a template that you MUST use. "
                        f"You are REQUIRED to fill out sections in []. " + prompt
@@ -267,7 +264,7 @@ def merge_score(candidate_score, scoring_data):
 
     # Merge candidate scores with scoring data
     merged_data = []
-    for candidate in candidate_score:
+    for candidate in candidate_score['candidate_scores']:
         if candidate['id'] in scoring_dict:
             merged_item = {**candidate, **scoring_dict[candidate['id']]}
             merged_data.append(merged_item)
@@ -279,9 +276,12 @@ def main(resume_directory=directory, test_mode=True):
     candidate_rankings = []  # Array of objects storing candidate rankings
     pdf_files = [f for f in os.listdir(resume_directory) if f.endswith('.pdf')]  # List all PDF files
 
-    logging.info("Starting processing of resumes.")
+    # Generate scoring system
+    scoring_data = get_scoring_system()
+    logging.info(f"Scoring system generated. {scoring_data}")
 
     # Process each PDF file with a progress bar
+    logging.info("Starting processing of resumes.")
     for pdf_filename in tqdm(pdf_files, desc="Processing Resumes", unit="file"):
         pdf_path = os.path.join(directory, pdf_filename)
         resume = extract_text_from_pdf(pdf_path)
@@ -289,35 +289,16 @@ def main(resume_directory=directory, test_mode=True):
 
         if test_mode:
             # Hardcoded values for testing
-            scoring_data, candidate_score, format_resume = simulate_test_mode()
+            x, score, format_resume = simulate_test_mode()
             logging.info(f"Test Mode: {pdf_filename} scored with {candidate_score}")
 
         else:
-            # Format resume
-            format_resume = parse_resume(resume)
-            # x, y, format_resume = simulate_test_mode()
-            logging.info(f"Formatted resume for {pdf_filename} for: {format_resume}")
-
-            # Save sections of the resume
-            education = format_resume['education']
-            work_experience = format_resume['work_experience']
-            skills_certification = format_resume['skills_certification']
-            logging.info(f"Resume sections for {pdf_filename}: Education, Work Experience, Skills")
-
-            # Generate scoring system
-            scoring_data = get_scoring_system()
-            logging.info(f"Scoring system generated. {scoring_data}")
-
             # Get candidate_score
-            we_score = get_criteria_score(scoring_data, work_experience, "work_experience")
-            edu_score = get_criteria_score(scoring_data, education, "education")
-            skc_score = get_criteria_score(scoring_data, skills_certification, "skills_certification")
-            candidate_score = we_score["candidate_scores"] + edu_score["candidate_scores"] + skc_score[
-                "candidate_scores"]
-            logging.info(f"Candidate scores for {pdf_filename}: {candidate_score}")
+            score = get_criteria_score(scoring_data, resume)
+            logging.info(f"Candidate scores for {pdf_filename}: {score}")
 
         # Merge scoring system with scores
-        all_scores = merge_score(candidate_score, scoring_data)
+        all_scores = merge_score(score, scoring_data)
         # Calculate final score
         final_score = calculate_final_score(all_scores)
         logging.info(f"Final score for {pdf_filename}: {final_score}")
@@ -326,7 +307,7 @@ def main(resume_directory=directory, test_mode=True):
             "application_id": str(uuid.uuid4()),
             "all_scores": all_scores,
             "final_score": final_score,
-            "contact_info": format_resume["contact_information"],
+            "resume": pdf_filename,
         })
 
     sorted_rankings = sorted(candidate_rankings, key=lambda x: x['final_score'], reverse=True)
@@ -336,20 +317,19 @@ def main(resume_directory=directory, test_mode=True):
 
 if __name__ == "__main__":
     candidate_rankings = main(test_mode=False)
-    print(json.dumps(candidate_rankings, indent=4))
+    # print(json.dumps(candidate_rankings, indent=4))
 
     # Print a formatted leaderboard from the sorted rankings
     print("\nCandidate Leaderboard\n" + "-" * 30)
-    leaderboard_format = "{rank:5} | {name:25} | {score:10} | {email:30}"
-    print(leaderboard_format.format(rank="Rank", name="Candidate Name", score="Final Score", email="Email"))
+    leaderboard_format = "{rank:5} | {resume:25} | {score:10}"
+    print(leaderboard_format.format(rank="Rank", resume="Resume", score="Final Score"))
     print("-" * 80)
 
     for i, application in enumerate(candidate_rankings, start=1):
-        candidate_name = application['contact_info'].get('name', 'N/A')
+        resume = application['resume']
         candidate_score = f"{round(application['final_score'])} / 100"  # Now formatted as a percentage
-        candidate_email = application['contact_info'].get('email', 'N/A')
         print(
-            leaderboard_format.format(rank=f"{i}.", name=candidate_name, score=candidate_score, email=candidate_email))
+            leaderboard_format.format(rank=f"{i}.", resume=resume, score=candidate_score))
 
     print("-" * 80)
     print("End of Leaderboard")
