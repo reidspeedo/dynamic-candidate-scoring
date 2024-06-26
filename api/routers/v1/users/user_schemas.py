@@ -14,7 +14,6 @@ class UserResponse(BaseModel):
     email: str
     username: str
     name: str
-    password: str
     created_at: datetime
     updated_at: datetime
 
