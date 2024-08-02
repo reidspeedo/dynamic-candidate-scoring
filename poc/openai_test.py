@@ -12,8 +12,8 @@ logging.basicConfig(filename='process_logs.log', level=logging.INFO, filemode='w
 
 
 def get_scoring_system():
-    job_description = read_file("job_description.txt")
-    custom_considerations = read_file("custom_considerations.txt")
+    job_description = read_file("poc/job_description.txt")
+    custom_considerations = read_file("poc/custom_considerations.txt")
     messages = [
         {
             "role": "system",
