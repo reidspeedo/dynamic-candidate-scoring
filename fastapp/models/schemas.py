@@ -13,12 +13,14 @@ class ScoringSystem(BaseModel):
 
 class CriterionScore(BaseModel):
     criterion_id: str
+    area: str
     score: int = Field(ge=0, le=10)
-    explanation: str
+    evaluation: str
+    reasoning: Optional[str] = None
+    weight: int = Field(ge=0, le=10)
 
 class ScoringResponse(BaseModel):
     resume_id: UUID = Field(default_factory=uuid4)
     resume_name: str
     scores: List[CriterionScore]
     total_score: float
-    ranking_explanation: str

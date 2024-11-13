@@ -1,7 +1,7 @@
 from openai import AsyncOpenAI
 import logging
 from typing import List, Dict, Any
-from core.config import get_settings
+from fastapp.core.config import get_settings
 
 settings = get_settings()
 

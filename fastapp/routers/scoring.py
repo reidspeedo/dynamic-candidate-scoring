@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from typing import List, Optional
-from models.schemas import ScoringResponse, ScoringSystem
-from services.scoring_service import create_scoring_system
+from fastapp.models.schemas import ScoringResponse, ScoringSystem
+from fastapp.services.scoring_service import create_scoring_system, score_resumes
 import logging
 
 router = APIRouter(prefix="/api/v1", tags=["scoring"])
@@ -23,16 +23,16 @@ async def generate_scoring_system(
 
 @router.post("/score", response_model=List[ScoringResponse])
 async def score_candidates(
-    scoring_system: ScoringSystem,
+    scoring_system: str = Form(...),
     resumes: List[UploadFile] = File(...)
 ):
     """Score uploaded resumes against the scoring system"""
     if not resumes:
         raise HTTPException(status_code=400, detail="No resumes provided")
-        
+
     try:
         return await score_resumes({
-            "scoring_system": scoring_system,
+            "scoring_system": ScoringSystem.parse_raw(scoring_system),
             "resumes": resumes
         })
     except Exception as e:
