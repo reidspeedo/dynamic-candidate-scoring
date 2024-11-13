@@ -1,8 +1,8 @@
-from api.routers.users.user_schemas import User
+from layer.schemas.user_schemas import User
 from sqlalchemy.exc import IntegrityError
-from db.config import SessionLocal
-from .user_models import UserSQL
-from utils.utils import Result
+from layer.repository.config import SessionLocal
+from layer.models.user_models import UserSQL
+from core.utils.utils import Result
 
 
 class UserRepository:

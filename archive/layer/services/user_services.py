@@ -1,6 +1,6 @@
-from db.users.user_repository import UserRepository
-from api.routers.users.user_schemas import User
-from utils.utils import Result
+from layer.repository.user_repository import UserRepository
+from layer.schemas.user_schemas import User
+from core.utils.utils import Result
 
 
 class UserService:

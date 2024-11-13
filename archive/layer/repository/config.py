@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from db.users.user_models import Base
+from layer.models.user_models import Base
 
 SQLALCHEMY_DATABASE_URL = "postgresql://reidrelatores:aurora@localhost/dynamiccandidate"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

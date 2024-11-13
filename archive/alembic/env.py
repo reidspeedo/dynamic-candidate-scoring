@@ -16,7 +16,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from db.users.user_models import Base
+from layer.models.user_models import Base
 
 target_metadata = Base.metadata
 

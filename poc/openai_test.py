@@ -12,8 +12,8 @@ logging.basicConfig(filename='process_logs.log', level=logging.INFO, filemode='w
 
 
 def get_scoring_system():
-    job_description = read_file("poc/job_description.txt")
-    custom_considerations = read_file("poc/custom_considerations.txt")
+    job_description = read_file("job_description.txt")
+    custom_considerations = read_file("custom_considerations.txt")
     messages = [
         {
             "role": "system",
@@ -71,7 +71,7 @@ def get_criteria_score(scoring_data, resume):
             "content": f"Here is the candidate's resume: {resume}"
                        f"Here is a list of criteria to evaluate the resume: {scoring_data}"
                        f"For each criteria, provide a candidate score (0-10), "
-                       f" and the ID associated with the evaulatuion."
+                       f" and the ID associated with the evaulation."
                        f"Here is a template that you MUST use. "
                        f"You are REQUIRED to fill out sections in []. " + prompt
         }
