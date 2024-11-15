@@ -1,7 +1,9 @@
-
+import { RootLayout } from '@/components/ui/RootLayout'
 
 export default function AboutPage() {
+
   return (
+    <RootLayout>
     <div className="min-h-screen flex flex-col">
 
 
@@ -70,5 +72,6 @@ export default function AboutPage() {
       </main>
 
     </div>
+    </RootLayout>
   )
 }

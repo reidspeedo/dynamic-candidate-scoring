@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { User } from '@/lib/lib-firebase'
+import { RootLayout } from '@/components/ui/RootLayout'
 
 export default function ContactPage({ user }: { user: User }) {
   const [name, setName] = useState('')
@@ -25,6 +26,7 @@ export default function ContactPage({ user }: { user: User }) {
   }
 
   return (
+    <RootLayout>
     <div className="min-h-screen flex flex-col">
   
 
@@ -123,5 +125,6 @@ export default function ContactPage({ user }: { user: User }) {
       </main>
 
     </div>
+    </RootLayout>
   )
 }
