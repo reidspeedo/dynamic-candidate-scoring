@@ -7,6 +7,7 @@ type SummaryPaneProps = {
   resumeCount: number;
   rankingsCount: number;
   currentStep: number;
+  isStepComplete: (step: number) => boolean;
 }
 
 export function SummaryPane({
@@ -14,30 +15,31 @@ export function SummaryPane({
   criteriaCount,
   resumeCount,
   rankingsCount,
-  currentStep
+  currentStep,
+  isStepComplete
 }: SummaryPaneProps) {
   const stepExplanations = [
     {
       title: "Generate Scoring System",
-      description: "First, we analyze the job description to generate a sample scoring system. You can also specify any additional criteria you want to consider when reviewing resumes.",
+      description: "We're analyzing your job description to create a tailored scoring system. This system will be the foundation for evaluating candidates. Feel free to add any specific skills or qualifications you're looking for to enhance the accuracy of our analysis.",
       icon: <FileText className="w-6 h-6 mr-3" />,
       status: `Job Description: ${jobDescription ? 'Provided' : 'Not provided'}`
     },
     {
       title: "Review Scoring System",
-      description: "Take a look at the generated scoring system and make any necessary edits. You can adjust criteria, their descriptions, and weights to best fit your needs.",
+      description: "Now it's time to fine-tune your scoring system. You can adjust criteria, descriptions, and weights to perfectly match your ideal candidate profile. This customization ensures that our AI will evaluate resumes based on what matters most to you.",
       icon: <Edit className="w-6 h-6 mr-3" />,
       status: `Criteria: ${criteriaCount}`
     },
     {
       title: "Upload Resumes",
-      description: "Upload the resumes you want to evaluate. The beta version of this application allows up to 20 resumes to be reviewed at once.",
+      description: "Let's gather the candidates! Upload up to 20 resumes for this evaluation round. Our system will analyze each resume against your customized scoring system, ensuring a fair and thorough assessment of all applicants.",
       icon: <Users className="w-6 h-6 mr-3" />,
       status: `Resumes: ${resumeCount}`
     },
     {
       title: "View Rankings",
-      description: "We compare candidates against each other based on the scoring system you've defined. You'll see a ranked list of candidates with their scores and reasoning.",
+      description: "The moment of truth! We've compared all candidates based on your unique scoring system. You'll see a ranked list of applicants, complete with individual scores and detailed reasoning for each ranking. This data will help you make informed decisions about which candidates to move forward in your hiring process.",
       icon: <BarChart className="w-6 h-6 mr-3" />,
       status: `Rankings: ${rankingsCount}`
     }
@@ -45,8 +47,18 @@ export function SummaryPane({
 
   const currentStepInfo = stepExplanations[currentStep - 1];
 
+  const getStatusColor = (step: number) => {
+    if (isStepComplete(step)) {
+      return 'bg-green-500 text-white';
+    } else if (step < currentStep) {
+      return 'bg-yellow-500 text-black';
+    } else {
+      return 'bg-red-500 text-white';
+    }
+  };
+
   return (
-    <div className="w-80">
+    <div className="w-full md:w-80">
       <Card className="bg-slate-800 text-white">
         <CardContent className="pt-6">
           <div className="space-y-4">
@@ -55,7 +67,7 @@ export function SummaryPane({
               <span>{currentStepInfo.title}</span>
             </div>
             <p className="text-sm text-gray-300">{currentStepInfo.description}</p>
-            <div className="bg-green-500 text-white px-2 py-1 rounded text-sm inline-block">
+            <div className={`px-2 py-1 rounded text-sm inline-block ${getStatusColor(currentStep)}`}>
               {currentStepInfo.status}
             </div>
           </div>

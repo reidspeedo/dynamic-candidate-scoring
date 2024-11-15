@@ -26,12 +26,6 @@ type ReviewScoringSystemProps = {
   goToStep: (step: number) => void;
 }
 
-const CRITERION_TYPES = {
-  work_experience: "Work Experience",
-  education: "Education",
-  skills_certification: "Skills & Certification"
-} as const;
-
 export function ReviewScoringSystem({
   scoringSystem,
   setScoringSystem,
@@ -39,6 +33,8 @@ export function ReviewScoringSystem({
 }: ReviewScoringSystemProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const criterionTypes = ["skills", "experience", "education", "certifications"];
 
   const handleEditCriterion = (index: number, field: keyof Criterion, value: string | number) => {
     const updatedCriteria = [...scoringSystem.criteria];
@@ -49,7 +45,7 @@ export function ReviewScoringSystem({
   const handleAddCriterion = () => {
     setScoringSystem({
       ...scoringSystem,
-      criteria: [...scoringSystem.criteria, { type: 'work_experience', description: '', weight: 5 }]
+      criteria: [...scoringSystem.criteria, { type: 'skills', description: '', weight: 5 }]
     });
   };
 
@@ -63,16 +59,10 @@ export function ReviewScoringSystem({
       setError("At least one criterion is required.");
       return;
     }
-    
-    const hasEmptyCriteria = scoringSystem.criteria.some(
-      c => !c.type || !c.description.trim()
-    );
-    
-    if (hasEmptyCriteria) {
+    if (scoringSystem.criteria.some(c => c.description.trim() === '' || c.type.trim() === '')) {
       setError("All criteria must have a type and description.");
       return;
     }
-    
     setError(null);
     goToStep(3);
   };
@@ -121,17 +111,14 @@ export function ReviewScoringSystem({
                 <Select
                   value={criterion.type}
                   onValueChange={(value) => handleEditCriterion(index, 'type', value)}
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type">
-                      {CRITERION_TYPES[criterion.type as keyof typeof CRITERION_TYPES] || "Select type"}
-                    </SelectValue>
+                    <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CRITERION_TYPES).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
+                    {criterionTypes.map((type) => (
+                      <SelectItem key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
