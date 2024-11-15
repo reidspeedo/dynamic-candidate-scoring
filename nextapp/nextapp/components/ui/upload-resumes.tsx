@@ -1,8 +1,12 @@
 'use client'
 
+import { useState, useCallback } from 'react'
+import { useDropzone } from 'react-dropzone'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Upload, X, FileText } from 'lucide-react'
 
 type UploadResumesProps = {
   resumes: File[];
@@ -17,14 +21,36 @@ export function UploadResumes({
   goToStep,
   setRankings
 }: UploadResumesProps) {
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setResumes([...resumes, ...Array.from(event.target.files)]);
+  const [selectedResume, setSelectedResume] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setResumes(prevResumes => [...prevResumes, ...acceptedFiles]);
+    setError(null);
+  }, [setResumes]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+    },
+    multiple: true
+  });
+
+  const removeResume = (index: number) => {
+    setResumes(resumes.filter((_, i) => i !== index));
+    if (selectedResume) {
+      URL.revokeObjectURL(selectedResume);
+      setSelectedResume(null);
     }
   };
 
   const handleRankCandidates = () => {
-    // This would typically be an API call to your backend
+    if (resumes.length === 0) {
+      setError("At least one resume is required.");
+      return;
+    }
+    setError(null);
     const mockRankings = resumes.map((resume, index) => ({
       name: `Candidate ${index + 1}`,
       score: Math.floor(Math.random() * 100),
@@ -34,36 +60,83 @@ export function UploadResumes({
     goToStep(4);
   };
 
+  const handlePreviewResume = (file: File) => {
+    if (selectedResume) {
+      URL.revokeObjectURL(selectedResume);
+    }
+    const fileUrl = URL.createObjectURL(file);
+    setSelectedResume(fileUrl);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <Input
-          id="resume-upload"
-          type="file"
-          accept=".pdf"
-          multiple
-          onChange={handleResumeUpload}
-          className="hidden"
-        />
-        <Label htmlFor="resume-upload" className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-          Choose Files
-        </Label>
-        <span className="text-sm text-muted-foreground">
-          {resumes.length} {resumes.length === 1 ? 'resume' : 'resumes'} selected
-        </span>
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-md p-8 text-center cursor-pointer ${
+              isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300'
+            }`}
+          >
+            <input {...getInputProps()} />
+            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-500">
+              {isDragActive
+                ? "Drop the files here ..."
+                : "Drag 'n' drop some files here, or click to select files"}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">Only .pdf files are accepted</p>
+          </div>
+        </CardContent>
+      </Card>
       {resumes.length > 0 && (
-        <ul className="list-disc list-inside">
-          {resumes.map((resume, index) => (
-            <li key={index} className="text-sm">{resume.name}</li>
-          ))}
-        </ul>
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-2">Uploaded Resumes</h3>
+            <ul className="space-y-2">
+              {resumes.map((resume, index) => (
+                <li key={index} className="flex items-center justify-between">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" className="flex items-center" onClick={() => handlePreviewResume(resume)}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        <span className="text-sm">{resume.name}</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl h-[90vh] p-0">
+                      <DialogHeader className="px-6 py-4 border-b">
+                        <DialogTitle>{resume.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex-1 w-full h-[calc(90vh-80px)]">
+                        <iframe
+                          src={selectedResume as string}
+                          className="w-full h-full rounded-b-lg"
+                          title="Resume Preview"
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeResume(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       )}
-      {resumes.length > 0 && (
-        <Button onClick={handleRankCandidates}>
-          Rank Candidates
-        </Button>
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
+      <Button onClick={handleRankCandidates}>
+        Rank Candidates
+      </Button>
     </div>
   )
 }

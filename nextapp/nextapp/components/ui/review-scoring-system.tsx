@@ -1,8 +1,14 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Edit, Trash2, ChevronRight } from 'lucide-react'
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Edit, ChevronRight, X } from 'lucide-react'
 
 type Criterion = {
   type: string;
@@ -25,6 +31,13 @@ export function ReviewScoringSystem({
   setScoringSystem,
   goToStep
 }: ReviewScoringSystemProps) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const criterionTypes = useMemo(() => {
+    return Array.from(new Set(scoringSystem.criteria.map(criterion => criterion.type)));
+  }, [scoringSystem.criteria]);
+
   const handleEditCriterion = (index: number, field: keyof Criterion, value: string | number) => {
     const updatedCriteria = [...scoringSystem.criteria];
     updatedCriteria[index] = { ...updatedCriteria[index], [field]: value };
@@ -32,9 +45,10 @@ export function ReviewScoringSystem({
   };
 
   const handleAddCriterion = () => {
+    const defaultType = criterionTypes[0] || 'work_experience';
     setScoringSystem({
       ...scoringSystem,
-      criteria: [...scoringSystem.criteria, { type: '', description: '', weight: 5 }]
+      criteria: [...scoringSystem.criteria, { type: defaultType, description: '', weight: 5 }]
     });
   };
 
@@ -43,45 +57,105 @@ export function ReviewScoringSystem({
     setScoringSystem({ ...scoringSystem, criteria: updatedCriteria });
   };
 
+  const handleNext = () => {
+    if (scoringSystem.criteria.length === 0) {
+      setError("At least one criterion is required.");
+      return;
+    }
+    setError(null);
+    goToStep(3);
+  };
+
   return (
-    <div className="space-y-4">
-      {scoringSystem.criteria.map((criterion, index) => (
-        <div key={index} className="p-4 border rounded">
-          <div className="grid grid-cols-3 gap-4 mb-2">
-            <Input
-              value={criterion.type}
-              onChange={(e) => handleEditCriterion(index, 'type', e.target.value)}
-              placeholder="Criterion Type"
-              className="text-sm"
-            />
-            <Input
-              value={criterion.description}
-              onChange={(e) => handleEditCriterion(index, 'description', e.target.value)}
-              placeholder="Description"
-              className="text-sm"
-            />
-            <Input
-              type="number"
-              value={criterion.weight}
-              onChange={(e) => handleEditCriterion(index, 'weight', parseInt(e.target.value))}
-              placeholder="Weight"
-              min="1"
-              max="10"
-              className="text-sm"
-            />
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-12 gap-4 items-start mb-4">
+            <div className="col-span-3">
+              <Label className="block mb-2 text-sm font-bold">Type</Label>
+              <p className="text-xs text-muted-foreground">Select the category of this criterion. Required.</p>
+            </div>
+            <div className="col-span-7">
+              <Label className="block mb-2 text-sm font-bold">Criteria</Label>
+              <p className="text-xs text-muted-foreground">Describe the specific requirement or skill. Required.</p>
+            </div>
+            <div className="col-span-2">
+              <Label className="block mb-2 text-sm font-bold">Weight</Label>
+              <p className="text-xs text-muted-foreground">Set importance (0-10). Required.</p>
+            </div>
           </div>
-          <Button variant="destructive" size="sm" onClick={() => handleRemoveCriterion(index)}>
-            <Trash2 className="w-4 h-4 mr-2" />
-            Remove
-          </Button>
-        </div>
+        </CardContent>
+      </Card>
+      {scoringSystem.criteria.map((criterion, index) => (
+        <Card 
+          key={index} 
+          className="relative"
+          onMouseEnter={() => setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
+          <CardContent className="pt-6">
+            {hoveredIndex === index && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 z-10"
+                onClick={() => handleRemoveCriterion(index)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Remove criterion</span>
+              </Button>
+            )}
+            <div className="grid grid-cols-12 gap-4 items-start">
+              <div className="col-span-3">
+                <Select
+                  value={criterion.type}
+                  onValueChange={(value) => handleEditCriterion(index, 'type', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {criterionTypes.map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-7">
+                <Textarea
+                  value={criterion.description}
+                  onChange={(e) => handleEditCriterion(index, 'description', e.target.value)}
+                  placeholder="Enter criterion description"
+                  className="resize-none"
+                  rows={2}
+                />
+              </div>
+              <div className="col-span-2">
+                <div className="flex items-center space-x-2">
+                  <Slider
+                    value={[criterion.weight]}
+                    onValueChange={(value) => handleEditCriterion(index, 'weight', value[0])}
+                    max={10}
+                    step={1}
+                  />
+                  <span className="text-sm font-medium w-8 text-center">{criterion.weight}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ))}
-      <div className="flex space-x-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <div className="flex justify-between">
         <Button onClick={handleAddCriterion}>
           <Edit className="w-4 h-4 mr-2" />
           Add Criterion
         </Button>
-        <Button onClick={() => goToStep(3)}>
+        <Button onClick={handleNext}>
           Next <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

@@ -5,17 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Bot } from 'lucide-react'
 import { useUser } from '@/lib/UserContext'
 
-type HeaderProps = {
-  user?: {
-    displayName: string;
-  };
-  onSignIn?: () => void;
-  onSignOut?: () => void;
-}
 
-export function Header({ onSignIn, onSignOut }: HeaderProps) {
-    const { user } = useUser();
-
+export function Header() {
+    const { user, signIn, signOut } = useUser();
   
 
   return (
@@ -47,10 +39,10 @@ export function Header({ onSignIn, onSignOut }: HeaderProps) {
           {user ? (
             <>
               <span className="text-sm">Welcome, {user.displayName}</span>
-              <Button onClick={onSignOut}>Sign out</Button>
+              <Button onClick={signOut}>Sign out</Button>
             </>
           ) : (
-            <Button onClick={onSignIn}>Sign In</Button>
+            <Button onClick={signIn}>Sign In</Button>
           )}
         </div>
       </div>

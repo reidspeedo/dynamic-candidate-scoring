@@ -26,16 +26,30 @@ export function Dashboard() {
   const [resumes, setResumes] = useState<File[]>([]);
   const [rankings, setRankings] = useState<any[]>([]);
 
+  const isStepComplete = (currentStep: number) => {
+    switch (currentStep) {
+      case 1:
+        return jobDescription.trim() !== '';
+      case 2:
+        return scoringSystem.criteria.length > 0;
+      case 3:
+        return resumes.length > 0;
+      case 4:
+        return rankings.length > 0;
+      default:
+        return false;
+    }
+  };
+
   const goToStep = (newStep: number) => {
     if (newStep >= 1 && newStep <= 4) {
       setStep(newStep);
     }
   };
-
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 bg-gray-50 dark:bg-gray-900 flex">
-        <ProgressBar step={step} goToStep={goToStep} />
+      <ProgressBar step={step} goToStep={goToStep} isStepComplete={isStepComplete} />
         <div className="flex-1 p-8">
           <h1 className="text-2xl font-semibold mb-6">Candidate Evaluation Dashboard</h1>
           <div className="flex gap-8">
@@ -76,7 +90,8 @@ export function Dashboard() {
               criteriaCount={scoringSystem.criteria.length}
               resumeCount={resumes.length}
               rankingsCount={rankings.length}
-            />
+              currentStep={step}
+/>
           </div>
         </div>
       </main>
