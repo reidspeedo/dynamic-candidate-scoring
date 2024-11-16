@@ -10,6 +10,7 @@ import { SummaryPane } from '@/components/ui/summary-pane'
 import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { ResumeProvider, useResumes } from '@/lib/ResumeContext'
 
 type Criterion = {
   type: string;
@@ -21,15 +22,15 @@ type ScoringSystem = {
   criteria: Criterion[];
 }
 
-export function Dashboard() {
+function DashboardContent() {
   const [step, setStep] = useState(1);
   const [jobDescription, setJobDescription] = useState('');
   const [customConsiderations, setCustomConsiderations] = useState('');
   const [scoringSystem, setScoringSystem] = useState<ScoringSystem>({ criteria: [] });
-  const [resumes, setResumes] = useState<File[]>([]);
   const [rankings, setRankings] = useState<any[]>([]);
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
   const router = useRouter();
+  const { resumes } = useResumes();
 
   const isStepComplete = (currentStep: number) => {
     switch (currentStep) {
@@ -88,8 +89,6 @@ export function Dashboard() {
               )}
               {step === 3 && (
                 <UploadResumes
-                  resumes={resumes}
-                  setResumes={setResumes}
                   goToStep={goToStep}
                   setRankings={setRankings}
                 />
@@ -97,7 +96,6 @@ export function Dashboard() {
               {step === 4 && (
                 <CandidateRankings
                   rankings={rankings}
-                  resumes={resumes}
                 />
               )}
             </div>
@@ -135,5 +133,13 @@ export function Dashboard() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export function Dashboard() {
+  return (
+    <ResumeProvider>
+      <DashboardContent />
+    </ResumeProvider>
   )
 }
