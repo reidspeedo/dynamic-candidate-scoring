@@ -66,58 +66,43 @@ export function Dashboard() {
       <main className="flex-1 bg-gray-50 dark:bg-gray-900 flex">
         <ProgressBar step={step} goToStep={goToStep} isStepComplete={isStepComplete} />
         <div className="flex-1 p-8">
-          <div className="space-y-6">
-            <h1 className="text-2xl font-semibold">Candidate Evaluation Dashboard</h1>
-            
-            {/* Summary pane for small screens */}
-            <div className="block lg:hidden">
-              <SummaryPane
-                jobDescription={jobDescription}
-                criteriaCount={scoringSystem.criteria.length}
-                resumeCount={resumes.length}
-                rankingsCount={rankings.length}
-                currentStep={step}
-                isStepComplete={isStepComplete}
-              />
+          <h1 className="text-2xl font-semibold mb-6">Candidate Evaluation Dashboard</h1>
+          <div className="flex flex-col lg:flex-row lg:gap-8">
+            <div className="flex-1 space-y-6 order-2 lg:order-1">
+              {step === 1 && (
+                <GenerateScoringSystem
+                  jobDescription={jobDescription}
+                  setJobDescription={setJobDescription}
+                  customConsiderations={customConsiderations}
+                  setCustomConsiderations={setCustomConsiderations}
+                  setScoringSystem={setScoringSystem}
+                  goToStep={goToStep}
+                />
+              )}
+              {step === 2 && (
+                <ReviewScoringSystem
+                  scoringSystem={scoringSystem}
+                  setScoringSystem={setScoringSystem}
+                  goToStep={goToStep}
+                />
+              )}
+              {step === 3 && (
+                <UploadResumes
+                  resumes={resumes}
+                  setResumes={setResumes}
+                  goToStep={goToStep}
+                  setRankings={setRankings}
+                />
+              )}
+              {step === 4 && (
+                <CandidateRankings
+                  rankings={rankings}
+                  resumes={resumes}
+                />
+              )}
             </div>
-
-            {/* Main content area with right sidebar for large screens */}
-            <div className="flex flex-col lg:flex-row lg:gap-8">
-              <div className="flex-1">
-                {step === 1 && (
-                  <GenerateScoringSystem
-                    jobDescription={jobDescription}
-                    setJobDescription={setJobDescription}
-                    customConsiderations={customConsiderations}
-                    setCustomConsiderations={setCustomConsiderations}
-                    setScoringSystem={setScoringSystem}
-                    goToStep={goToStep}
-                  />
-                )}
-                {step === 2 && (
-                  <ReviewScoringSystem
-                    scoringSystem={scoringSystem}
-                    setScoringSystem={setScoringSystem}
-                    goToStep={goToStep}
-                  />
-                )}
-                {step === 3 && (
-                  <UploadResumes
-                    resumes={resumes}
-                    setResumes={setResumes}
-                    goToStep={goToStep}
-                    setRankings={setRankings}
-                  />
-                )}
-                {step === 4 && (
-                  <CandidateRankings
-                    rankings={rankings}
-                  />
-                )}
-              </div>
-              
-              {/* Summary pane for large screens */}
-              <div className="hidden lg:block w-80">
+            {step !== 4 && (
+              <div className="lg:w-80 w-full mb-6 lg:mb-0 order-1 lg:order-2">
                 <SummaryPane
                   jobDescription={jobDescription}
                   criteriaCount={scoringSystem.criteria.length}
@@ -127,7 +112,7 @@ export function Dashboard() {
                   isStepComplete={isStepComplete}
                 />
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

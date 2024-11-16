@@ -102,25 +102,27 @@ async def score_resumes(data: Dict) -> List[ScoringResponse]:
     
     print("\nDetailed Candidate Leaderboard\n" + "=" * 80)
     
-    for i, application in enumerate(scored_candidates, start=1):
-        print(f"\nRank {i}:")
-        print("-" * 80)
-        print(f"Resume: {application.resume_name}")
-        print(f"Total Score: {round(application.total_score)} / 100")
-        print("\nDetailed Scores:")
-        print("-" * 40)
+    # for i, application in enumerate(scored_candidates, start=1):
+    #     print(f"\nRank {i}:")
+    #     print("-" * 80)
+    #     print(f"Resume: {application.resume_name}")
+    #     print(f"Total Score: {round(application.total_score)} / 100")
+    #     print("\nDetailed Scores:")
+    #     print("-" * 40)
         
-        # Print individual criterion scores
-        for score in application.scores:
-            print(f"\nArea: {score.area}")
-            print(f"Evaluation Criteria: {score.evaluation}")
-            print(f"Weight: {score.weight}/10")
-            print(f"Score: {score.score}/10")
-            if score.reasoning:
-                print(f"Reasoning: {score.reasoning}")
-        print("=" * 80)
+    #     # Print individual criterion scores
+    #     for score in application.scores:
+    #         print(f"\nArea: {score.area}")
+    #         print(f"Evaluation Criteria: {score.evaluation}")
+    #         print(f"Weight: {score.weight}/10")
+    #         print(f"Score: {score.score}/10")
+    #         if score.reasoning:
+    #             print(f"Reasoning: {score.reasoning}")
+    #     print("=" * 80)
 
-    print("\nEnd of Detailed Leaderboard")
+    # print("\nEnd of Detailed Leaderboard")
+
+    print(scored_candidates)
 
     ############################################################################
     return scored_candidates
